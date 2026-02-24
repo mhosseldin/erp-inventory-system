@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+backend/dist/
+frontend/dist/
+
+# Environment files — never commit these
+.env
+backend/.env
+frontend/.env
+
+# Prisma
+backend/prisma/*.db
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
