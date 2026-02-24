@@ -1,0 +1,201 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── ENUMS ───────────────────────────────
+
+enum OrderType {
+  SALE
+  PURCHASE
+}
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+enum MovementType {
+  IN
+  OUT
+  ADJUSTMENT
+}
+enum InvoiceStatus {
+  UNPAID
+  PAID
+  VOID
+}
+
+// ─── USER & AUTH ─────────────────────────
+
+model Role {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
+  users       User[]
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  email         String    @unique
+  password_hash String
+  fullname      String
+  role_id       Int
+  role          Role      @relation(fields: [role_id], references: [id])
+  is_active     Boolean   @default(true)
+  orders        Order[]
+  movements     InventoryMovement[]
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  @@index([role_id])
+}
+
+// ─── PRODUCT ─────────────────────────────
+
+model Product {
+  id            Int       @id @default(autoincrement())
+  sku           String    @unique
+  name          String
+  description   String?
+  price         Decimal   @db.Decimal(12,2)
+  cost          Decimal   @db.Decimal(12,2)
+  reorder_level Int       @default(10)
+  is_active     Boolean   @default(true)
+  order_items   OrderItem[]
+  movements     InventoryMovement[]
+  inventory     Inventory[]
+  suppliers     SupplierProduct[]
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  @@index([name])
+}
+
+// ─── SUPPLIER & CUSTOMER ──────────────────
+
+model Supplier {
+  id         Int              @id @default(autoincrement())
+  name       String
+  phone      String?
+  email      String?
+  orders     Order[]
+  products   SupplierProduct[]
+  created_at DateTime         @default(now())
+}
+
+model SupplierProduct {
+  supplier_id     Int
+  product_id      Int
+  supplier        Supplier @relation(fields: [supplier_id], references: [id])
+  product         Product  @relation(fields: [product_id], references: [id])
+  supplier_price  Decimal  @db.Decimal(12,2)
+  lead_time_days  Int?
+  min_order_qty   Int?
+  @@id([supplier_id, product_id])
+}
+
+model Customer {
+  id         Int      @id @default(autoincrement())
+  name       String
+  phone      String?
+  email      String?
+  orders     Order[]
+  created_at DateTime @default(now())
+}
+
+// ─── WAREHOUSE & INVENTORY ────────────────
+
+model Warehouse {
+  id         Int                @id @default(autoincrement())
+  name       String
+  location   String?
+  is_default Boolean            @default(false)
+  movements  InventoryMovement[]
+  inventory  Inventory[]
+  created_at DateTime           @default(now())
+}
+
+model Inventory {
+  id                Int       @id @default(autoincrement())
+  product_id        Int
+  product           Product   @relation(fields: [product_id], references: [id])
+  warehouse_id      Int
+  warehouse         Warehouse @relation(fields: [warehouse_id], references: [id])
+  quantity_on_hand  Int       @default(0)
+  reserved_quantity Int       @default(0)
+  @@unique([product_id, warehouse_id])
+  @@index([product_id])
+}
+
+// ─── ORDERS ──────────────────────────────
+
+model Order {
+  id          Int         @id @default(autoincrement())
+  type        OrderType
+  status      OrderStatus @default(PENDING)
+  total       Decimal     @db.Decimal(14,2) @default(0)
+  notes       String?
+  customer_id Int?
+  customer    Customer?   @relation(fields: [customer_id], references: [id])
+  supplier_id Int?
+  supplier    Supplier?   @relation(fields: [supplier_id], references: [id])
+  created_by  Int
+  user        User        @relation(fields: [created_by], references: [id])
+  items       OrderItem[]
+  movements   InventoryMovement[]
+  invoice     Invoice?
+  created_at  DateTime    @default(now())
+  @@index([type])
+  @@index([status])
+  @@index([created_at])
+}
+
+model OrderItem {
+  id             Int     @id @default(autoincrement())
+  order_id       Int
+  order          Order   @relation(fields: [order_id], references: [id])
+  product_id     Int
+  product        Product @relation(fields: [product_id], references: [id])
+  quantity       Int
+  price_snapshot Decimal @db.Decimal(12,2)
+  cost_snapshot  Decimal @db.Decimal(12,2)
+  @@index([order_id])
+}
+
+// ─── INVOICE ─────────────────────────────
+
+model Invoice {
+  id             Int           @id @default(autoincrement())
+  invoice_number String        @unique
+  order_id       Int           @unique
+  order          Order         @relation(fields: [order_id], references: [id])
+  status         InvoiceStatus @default(UNPAID)
+  issue_date     DateTime      @default(now())
+  paid_at        DateTime?
+  created_at     DateTime      @default(now())
+  @@index([status])
+  @@index([issue_date])
+}
+
+// ─── INVENTORY MOVEMENT ──────────────────
+
+model InventoryMovement {
+  id              Int          @id @default(autoincrement())
+  product_id      Int
+  product         Product      @relation(fields: [product_id], references: [id])
+  warehouse_id    Int
+  warehouse       Warehouse    @relation(fields: [warehouse_id], references: [id])
+  order_id        Int?
+  order           Order?       @relation(fields: [order_id], references: [id])
+  type            MovementType
+  quantity_change Int
+  reason          String?
+  created_by      Int
+  user            User         @relation(fields: [created_by], references: [id])
+  created_at      DateTime     @default(now())
+  @@index([product_id])
+  @@index([created_at])
+}
+
