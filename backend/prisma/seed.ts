@@ -1,13 +1,19 @@
+import 'dotenv/config';
+
+import { PrismaClient } from '../generated/prisma';
+import { PrismaPg } from '@prisma/adapter-pg';
 import {
-  PrismaClient,
   OrderType,
   OrderStatus,
   MovementType,
   InvoiceStatus,
-} from '@prisma/client';
+} from '../generated/prisma';
 import * as bcrypt from 'bcrypt';
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL!,
+});
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log('🌱 Starting seed...');
