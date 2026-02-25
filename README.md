@@ -336,7 +336,7 @@ src/
 ```bash
 # Clone the repo
 git clone https://github.com/mhosseldin/erp-inventory-system.git
-cd stockflow-erp/backend
+cd erp-inventory-system/backend
 
 # Install dependencies
 npm install
