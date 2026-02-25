@@ -335,7 +335,7 @@ src/
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-username/stockflow-erp.git
+git clone https://github.com/mhosseldin/erp-inventory-system.git
 cd stockflow-erp/backend
 
 # Install dependencies
