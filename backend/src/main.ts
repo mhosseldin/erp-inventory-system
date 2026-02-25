@@ -20,7 +20,14 @@ async function bootstrap() {
     .setTitle('Mini ERP API')
     .setDescription('Inventory & Order Management System')
     .setVersion('1.0')
-    .addBearerAuth()
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+      'JWT',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
