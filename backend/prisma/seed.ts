@@ -1,13 +1,13 @@
 import 'dotenv/config';
 
-import { PrismaClient } from '../generated/prisma';
+import { PrismaClient } from '../src/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import {
   OrderType,
   OrderStatus,
   MovementType,
   InvoiceStatus,
-} from '../generated/prisma';
+} from '../src/generated/prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const adapter = new PrismaPg({
