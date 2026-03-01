@@ -20,11 +20,6 @@ export class CreateProductDto {
   @Min(0)
   cost: number;
 
-  @ApiProperty()
-  @IsNumber()
-  @Min(0)
-  stock_quantity: number;
-
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
