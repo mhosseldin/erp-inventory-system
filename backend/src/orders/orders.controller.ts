@@ -16,6 +16,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { OrderStatus, OrderType } from '@prisma-client/enums';
 
 @ApiTags('Orders')
 @ApiBearerAuth('JWT')
@@ -24,9 +25,18 @@ export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List orders' })
-  findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
-    return this.ordersService.findAll(Number(page) || 1, Number(limit) || 10);
+  findAll(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('type') type?: OrderType,
+    @Query('status') status?: OrderStatus,
+  ) {
+    return this.ordersService.findAll(
+      Number(page) || 1,
+      Number(limit) || 10,
+      type,
+      status,
+    );
   }
 
   @Get(':id')
