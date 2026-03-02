@@ -17,29 +17,45 @@ const DEFAULT_WAREHOUSE_ID = Number(process.env.DEFAULT_WAREHOUSE_ID) || 1;
 export class OrdersService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(page = 1, limit = 10) {
+  async findAll(page = 1, limit = 10, type?: OrderType, status?: OrderStatus) {
     const skip = (page - 1) * limit;
+
+    const where = {
+      ...(type && { type }),
+      ...(status && { status }),
+    };
 
     const [data, total] = await Promise.all([
       this.prisma.order.findMany({
+        where,
         skip,
         take: limit,
         orderBy: { created_at: 'desc' },
+        include: {
+          customer: true,
+          supplier: true,
+          invoice: true,
+          _count: { select: { items: true } },
+        },
       }),
-      this.prisma.order.count(),
+      this.prisma.order.count({ where }),
     ]);
 
-    return {
-      data,
-      page,
-      lastPage: Math.ceil(total / limit),
-    };
+    return { data, total, page, lastPage: Math.ceil(total / limit) };
   }
 
   async findOne(id: number) {
-    const order = await this.prisma.order.findUnique({ where: { id } });
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      include: {
+        items: { include: { product: true } },
+        customer: true,
+        supplier: true,
+        invoice: true,
+      },
+    });
 
-    if (!order) throw new NotFoundException('Product not found');
+    if (!order) throw new NotFoundException('Order not found');
 
     return order;
   }
