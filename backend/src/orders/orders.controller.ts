@@ -7,12 +7,15 @@ import {
   Query,
   Body,
   UseGuards,
+  Post,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { CreateOrderDto } from './dto/create-order.dto';
 
 @ApiTags('Orders')
 @ApiBearerAuth('JWT')
@@ -32,14 +35,23 @@ export class OrdersController {
     return this.ordersService.findOne(id);
   }
 
+  @Post()
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'SALES')
+  @ApiOperation({ summary: 'Create a new order (PENDING)' })
+  create(@Body() dto: CreateOrderDto, @CurrentUser() user: { userId: number }) {
+    return this.ordersService.create(dto, user.userId);
+  }
+
+  @Patch(':id/status')
   @UseGuards(RolesGuard)
   @Roles('ADMIN')
-  @Patch(':id/status')
-  @ApiOperation({ summary: 'Update order status' })
-  updateOrderStatus(
+  @ApiOperation({ summary: 'Update order status (COMPLETED or CANCELLED)' })
+  updateStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateOrderStatusDto,
+    @CurrentUser() user: { userId: number },
   ) {
-    return this.ordersService.updateStatus(id, dto);
+    return this.ordersService.updateStatus(id, dto, user.userId);
   }
 }
